@@ -23,7 +23,7 @@ API HTTP para criar, listar, buscar, atualizar, mudar o status e apagar tarefas 
 4. Suba o servidor:
 
    ```bash
-   uvicorn main:app
+   uvicorn main:app --env-file .env
    ```
 
 ## Rotas
