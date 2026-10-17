@@ -19,7 +19,14 @@ API HTTP para criar, listar, buscar, atualizar, mudar o status e apagar tarefas 
    pip install -r requirements.txt
    ```
 
-2. Exporte `DATABASE_URL` com a connection string do banco. O arquivo `.env.example` tem o placeholder da variável. Se a variável não estiver no ambiente, `python migrate.py` lê o arquivo `.env`.
+2. Crie um arquivo chamado `.env` na pasta principal do projeto,
+   com uma única linha:
+
+   ```
+   DATABASE_URL=postgresql://usuario:senha@endereco-do-banco/neondb?sslmode=require
+   ```
+
+   Troque o valor pela connection string do seu banco, sem aspas e sem espaços ao redor do `=`. O Git ignora esse arquivo, então a senha não vai pro GitHub.
 
 3. Aplique as migrations:
 
