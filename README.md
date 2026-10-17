@@ -7,8 +7,15 @@ API HTTP para criar, listar, buscar, atualizar, mudar o status e apagar tarefas 
 1. Instale as dependências:
 
    ```bash
+   # Linux/Mac
    python3 -m venv venv
    source venv/bin/activate
+
+   # Windows (PowerShell)
+   python -m venv venv
+   venv\Scripts\activate
+
+   # Em qualquer sistema
    pip install -r requirements.txt
    ```
 
