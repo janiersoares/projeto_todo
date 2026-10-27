@@ -1,0 +1,24 @@
+import pytest
+from pydantic import ValidationError
+
+from schemas.user import UserCreate, UserOut
+
+
+def test_valid_user_is_accepted():
+    user = UserCreate(email="test@example.com", password="12345678")
+    assert user.email == "test@example.com"
+
+
+def test_invalid_email_is_rejected():
+    with pytest.raises(ValidationError):
+        UserCreate(email="not-an-email", password="12345678")
+
+
+def test_short_password_is_rejected():
+    with pytest.raises(ValidationError):
+        UserCreate(email="test@example.com", password="1234567")
+
+
+def test_user_out_does_not_expose_password():
+    assert "password" not in UserOut.model_fields
+    assert "password_hash" not in UserOut.model_fields
