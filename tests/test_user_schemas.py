@@ -22,3 +22,8 @@ def test_short_password_is_rejected():
 def test_user_out_does_not_expose_password():
     assert "password" not in UserOut.model_fields
     assert "password_hash" not in UserOut.model_fields
+
+
+def test_password_with_exactly_8_characters_is_accepted():
+    user = UserCreate(email="test@example.com", password="12345678")
+    assert user.password == "12345678"
