@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 import db
 from migrations import apply
 from routes.tasks import router
+from routes.auth import router as auth_router
 
 _schema_ready = False
 
@@ -30,7 +31,7 @@ async def lifespan(_app):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(router)
-
+app.include_router(auth_router)
 
 @app.exception_handler(db.DatabaseUnavailable)
 def database_unavailable(_request, _exc):
