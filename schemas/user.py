@@ -10,7 +10,13 @@ class UserCreate(BaseModel):
     def normalize_email(cls, value):
         return value.strip().lower()
 
+
 class UserOut(BaseModel):
     id: int
     email: str
     created_at: str
+
+
+class LoginBody(BaseModel):
+    email: EmailStr
+    password: str
