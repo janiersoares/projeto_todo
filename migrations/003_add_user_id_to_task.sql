@@ -1,0 +1,2 @@
+ALTER TABLE tasks
+    ADD COLUMN IF NOT EXISTS user_id integer REFERENCES users(id) ON DELETE CASCADE;
