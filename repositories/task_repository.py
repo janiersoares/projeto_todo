@@ -18,39 +18,41 @@ class TaskRepository:
     def __init__(self, connection):
         self.connection = connection
 
-    def insert(self, title, description):
+    def insert(self, user_id, title, description):
         cursor = self.connection.execute(
             f"""
-            INSERT INTO tasks (title, description)
-            VALUES (%s, %s)
+            INSERT INTO tasks (user_id, title, description)
+            VALUES (%s, %s, %s)
             RETURNING {COLUMNS}
             """,
-            (title, description),
+            (user_id, title, description),
         )
         row = cursor.fetchone()
         cursor.close()
         return to_task(row)
 
-    def list_all(self):
+    def list_all(self, user_id):
         cursor = self.connection.execute(
             f"""
             SELECT {COLUMNS}
             FROM tasks
+            WHERE user_id = %s
             ORDER BY id ASC
-            """
+            """,
+            (user_id,),
         )
         rows = cursor.fetchall()
         cursor.close()
         return [to_task(row) for row in rows]
 
-    def find_by_id(self, task_id):
+    def find_by_id(self, user_id, task_id):
         cursor = self.connection.execute(
             f"""
             SELECT {COLUMNS}
             FROM tasks
-            WHERE id = %s
+            WHERE id = %s AND user_id = %s
             """,
-            (task_id,),
+            (task_id, user_id),
         )
         row = cursor.fetchone()
         cursor.close()
@@ -58,17 +60,17 @@ class TaskRepository:
             return None
         return to_task(row)
 
-    def update(self, task_id, title, description):
+    def update(self, user_id, task_id, title, description):
         cursor = self.connection.execute(
             f"""
             UPDATE tasks
             SET title = %s,
                 description = %s,
                 updated_at = clock_timestamp()
-            WHERE id = %s
+            WHERE id = %s AND user_id = %s
             RETURNING {COLUMNS}
             """,
-            (title, description, task_id),
+            (title, description, task_id, user_id),
         )
         row = cursor.fetchone()
         cursor.close()
@@ -76,16 +78,16 @@ class TaskRepository:
             return None
         return to_task(row)
 
-    def update_status(self, task_id, status):
+    def update_status(self, user_id, task_id, status):
         cursor = self.connection.execute(
             f"""
             UPDATE tasks
             SET status = %s,
                 updated_at = clock_timestamp()
-            WHERE id = %s
+            WHERE id = %s AND user_id = %s
             RETURNING {COLUMNS}
             """,
-            (status, task_id),
+            (status, task_id, user_id),
         )
         row = cursor.fetchone()
         cursor.close()
@@ -93,14 +95,14 @@ class TaskRepository:
             return None
         return to_task(row)
 
-    def delete(self, task_id):
+    def delete(self, user_id, task_id):
         cursor = self.connection.execute(
             """
             DELETE FROM tasks
-            WHERE id = %s
+            WHERE id = %s AND user_id = %s
             RETURNING title
             """,
-            (task_id,),
+            (task_id, user_id),
         )
         row = cursor.fetchone()
         cursor.close()
