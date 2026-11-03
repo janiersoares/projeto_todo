@@ -6,4 +6,5 @@ pytest
 email-validator
 bcrypt
 pyjwt
+httpx
 

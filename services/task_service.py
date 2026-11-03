@@ -7,32 +7,32 @@ class TaskService:
     def __init__(self, repository):
         self.repository = repository
 
-    def create(self, title, description):
-        return self.repository.insert(title, description)
+    def create(self, user_id, title, description):
+        return self.repository.insert(user_id, title, description)
 
-    def list_all(self):
-        return self.repository.list_all()
+    def list_all(self, user_id):
+        return self.repository.list_all(user_id)
 
-    def get(self, task_id):
-        task = self.repository.find_by_id(task_id)
+    def get(self, user_id, task_id):
+        task = self.repository.find_by_id(user_id, task_id)
         if task is None:
             raise TaskNotFound(task_id)
         return task
 
-    def update(self, task_id, title, description):
-        task = self.repository.update(task_id, title, description)
+    def update(self, user_id, task_id, title, description):
+        task = self.repository.update(user_id, task_id, title, description)
         if task is None:
             raise TaskNotFound(task_id)
         return task
 
-    def change_status(self, task_id, status):
-        task = self.repository.update_status(task_id, status)
+    def change_status(self, user_id, task_id, status):
+        task = self.repository.update_status(user_id, task_id, status)
         if task is None:
             raise TaskNotFound(task_id)
         return task
 
-    def remove(self, task_id):
-        title = self.repository.delete(task_id)
+    def remove(self, user_id, task_id):
+        title = self.repository.delete(user_id, task_id)
         if title is None:
             raise TaskNotFound(task_id)
         return title

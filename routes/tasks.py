@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from db import get_connection
 from repositories.task_repository import TaskRepository
 from schemas.task import MessageOut, StatusBody, TaskCreate, TaskOut, TaskReplace
+from security.dependencies import get_current_user_id
 from services.task_service import TaskNotFound, TaskService
 
 router = APIRouter()
@@ -17,20 +18,31 @@ def not_found(task_id):
 
 
 @router.post("/tasks", status_code=201, response_model=TaskOut)
-def create_task(body: TaskCreate, service: TaskService = Depends(get_service)):
-    task = service.create(body.title, body.description)
+def create_task(
+    body: TaskCreate,
+    service: TaskService = Depends(get_service),
+    user_id: int = Depends(get_current_user_id),
+):
+    task = service.create(user_id, body.title, body.description)
     return TaskOut.from_model(task)
 
 
 @router.get("/tasks", response_model=list[TaskOut])
-def list_tasks(service: TaskService = Depends(get_service)):
-    return [TaskOut.from_model(task) for task in service.list_all()]
+def list_tasks(
+    service: TaskService = Depends(get_service),
+    user_id: int = Depends(get_current_user_id),
+):
+    return [TaskOut.from_model(task) for task in service.list_all(user_id)]
 
 
 @router.get("/tasks/{task_id}", response_model=TaskOut)
-def get_task(task_id: int, service: TaskService = Depends(get_service)):
+def get_task(
+    task_id: int,
+    service: TaskService = Depends(get_service),
+    user_id: int = Depends(get_current_user_id),
+):
     try:
-        task = service.get(task_id)
+        task = service.get(user_id, task_id)
     except TaskNotFound:
         not_found(task_id)
     return TaskOut.from_model(task)
@@ -41,9 +53,10 @@ def replace_task(
     task_id: int,
     body: TaskReplace,
     service: TaskService = Depends(get_service),
+    user_id: int = Depends(get_current_user_id),
 ):
     try:
-        task = service.update(task_id, body.title, body.description)
+        task = service.update(user_id, task_id, body.title, body.description)
     except TaskNotFound:
         not_found(task_id)
     return TaskOut.from_model(task)
@@ -54,18 +67,23 @@ def change_status(
     task_id: int,
     body: StatusBody,
     service: TaskService = Depends(get_service),
+    user_id: int = Depends(get_current_user_id),
 ):
     try:
-        task = service.change_status(task_id, body.status)
+        task = service.change_status(user_id, task_id, body.status)
     except TaskNotFound:
         not_found(task_id)
     return TaskOut.from_model(task)
 
 
 @router.delete("/tasks/{task_id}", response_model=MessageOut)
-def delete_task(task_id: int, service: TaskService = Depends(get_service)):
+def delete_task(
+    task_id: int,
+    service: TaskService = Depends(get_service),
+    user_id: int = Depends(get_current_user_id),
+):
     try:
-        title = service.remove(task_id)
+        title = service.remove(user_id, task_id)
     except TaskNotFound:
         not_found(task_id)
     return MessageOut(message=f"Task {title} was removed successfully!")
