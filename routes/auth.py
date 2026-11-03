@@ -1,3 +1,6 @@
+from schemas.user import LoginBody, TokenOut, UserCreate, UserOut
+from security.token import create_access_token
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from db import get_connection
@@ -26,15 +29,11 @@ def register(body: UserCreate, service: UserService = Depends(get_user_service))
     )
 
 
-@router.post("/login", status_code=200, response_model=UserOut)
+@router.post("/login", status_code=200, response_model=TokenOut)
 def login(body: LoginBody, service: UserService = Depends(get_user_service)):
     try:
         user = service.login(body.email, body.password)
     except InvalidCredentials:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    return UserOut(
-        id=user["id"],
-        email=user["email"],
-        created_at=user["created_at"].isoformat(),
-    )
+    return TokenOut(access_token=create_access_token(user["id"]))

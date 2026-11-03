@@ -20,3 +20,8 @@ class UserOut(BaseModel):
 class LoginBody(BaseModel):
     email: EmailStr
     password: str
+
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
