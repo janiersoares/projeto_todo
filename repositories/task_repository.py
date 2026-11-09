@@ -31,15 +31,16 @@ class TaskRepository:
         cursor.close()
         return to_task(row)
 
-    def list_all(self, user_id):
+    def list_all(self, user_id, limit, offset):
         cursor = self.connection.execute(
             f"""
             SELECT {COLUMNS}
             FROM tasks
             WHERE user_id = %s
             ORDER BY id ASC
+            LIMIT %s OFFSET %s
             """,
-            (user_id,),
+            (user_id, limit, offset),
         )
         rows = cursor.fetchall()
         cursor.close()

@@ -1,13 +1,27 @@
 # To-Do List API
 
-HTTP API to register users, log in, and manage personal tasks on Postgres (Neon). Each user can only see their own tasks.
+HTTP API to register users, log in, and manage personal tasks on Postgres. Each user can only see their own tasks.
+
+[![tests](https://github.com/janiersoares/projeto_todo/actions/workflows/tests.yml/badge.svg)](https://github.com/janiersoares/projeto_todo/actions/workflows/tests.yml)
 
 ## Requirements
 
 - Python 3.10 or higher
-- A Postgres database (this project uses Neon)
+- A Postgres database (this project was developed with Neon)
 
 ## How to run
+
+### Option 1: with Docker
+
+Requires Docker Desktop. Create a `.env` file with `JWT_SECRET` (see step 2 below), then run:
+
+```bash
+docker compose up --build
+```
+
+The API runs at `http://localhost:8000` and the database at `localhost:5432`.
+
+### Option 2: locally
 
 1. Install the dependencies:
 
@@ -73,12 +87,19 @@ Body (JSON):
 - `409`: the email is already registered.
 - `422`: invalid email or a password shorter than 8 characters.
 
+Emails are stored in lowercase, so `Ana@Example.com` and `ana@example.com` are the same account.
+
 ### Log in: `POST /auth/login`
 
 Body (JSON), same as register.
 
 - `200`: returns the token, in the format `{"access_token": "...", "token_type": "bearer"}`.
 - `401`: invalid email or password.
+- `429`: too many failed attempts for this email. See below.
+
+### Login rate limit
+
+After 5 failed attempts for the same email within 15 minutes, login returns `429` until the window passes. A successful login clears the counter. The counter lives in the server's memory, so it resets when the server restarts.
 
 ### Using the token
 
@@ -97,13 +118,22 @@ All task routes require the `Authorization` header. Without it, the response is 
 | Method | Route | Action |
 |---|---|---|
 | `POST` | `/tasks` | Create a task |
-| `GET` | `/tasks` | List your tasks |
+| `GET` | `/tasks` | List your tasks (paginated) |
 | `GET` | `/tasks/{id}` | Get one task |
 | `PUT` | `/tasks/{id}` | Update title and description |
 | `PATCH` | `/tasks/{id}/status` | Change the status |
 | `DELETE` | `/tasks/{id}` | Delete a task |
 
 A task's status is `pending` or `completed`. Tasks that belong to another user return `404`, as if they did not exist. The fields for each request are described in `/docs`.
+
+### Pagination
+
+`GET /tasks` accepts two optional query parameters:
+
+- `limit`: how many tasks to return, from 1 to 100. Default: 20.
+- `offset`: how many tasks to skip. Default: 0.
+
+Example: `GET /tasks?limit=10&offset=20` returns tasks 21 to 30 of your list. Tasks are ordered by `id`.
 
 ## Tests
 
@@ -115,12 +145,19 @@ python -m pytest -v
 
 The tests use the real database. Each test rolls back its own changes when it finishes.
 
+Tests also run automatically on GitHub Actions for every pull request, using a Postgres service container.
+
 ## Project structure
 
 - `routes/`: HTTP endpoints
 - `schemas/`: validation of input and output data
 - `services/`: business rules
 - `repositories/`: SQL queries
-- `security/`: password hashing (bcrypt), tokens (JWT), and the dependency that identifies the user
-- `migrations/`: database changes, applied in order
+- `security/`: password hashing (bcrypt), tokens (JWT), login rate limit, and the dependency that identifies the user
+- `migrations/`: database changes, applied in order on startup
 - `tests/`: automated tests
+- `.github/workflows/`: continuous integration
+
+## License
+
+MIT. See [LICENSE](LICENSE).

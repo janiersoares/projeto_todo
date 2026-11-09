@@ -10,8 +10,8 @@ class TaskService:
     def create(self, user_id, title, description):
         return self.repository.insert(user_id, title, description)
 
-    def list_all(self, user_id):
-        return self.repository.list_all(user_id)
+    def list_all(self, user_id, limit, offset):
+        return self.repository.list_all(user_id, limit, offset)
 
     def get(self, user_id, task_id):
         task = self.repository.find_by_id(user_id, task_id)

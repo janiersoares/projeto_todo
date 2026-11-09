@@ -27,11 +27,13 @@ async def lifespan(_app):
                 connection.close()
             _schema_ready = True
     yield
+    db.close_pool()
 
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(router)
 app.include_router(auth_router)
+
 
 @app.exception_handler(db.DatabaseUnavailable)
 def database_unavailable(_request, _exc):

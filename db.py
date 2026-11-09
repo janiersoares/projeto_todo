@@ -2,32 +2,44 @@ import os
 
 import psycopg
 from psycopg.rows import dict_row
+from psycopg_pool import ConnectionPool, PoolTimeout
 
 
 class DatabaseUnavailable(Exception):
     pass
 
 
+_pool = None
+
+
 def connect():
     return psycopg.connect(os.environ["DATABASE_URL"])
 
 
+def get_pool():
+    global _pool
+    if _pool is None:
+        _pool = ConnectionPool(
+            os.environ["DATABASE_URL"],
+            min_size=1,
+            max_size=10,
+            timeout=5,
+            kwargs={"row_factory": dict_row},
+        )
+    return _pool
+
+
+def close_pool():
+    global _pool
+    if _pool is not None:
+        _pool.close()
+        _pool = None
+
+
 def get_connection():
     try:
-        connection = connect()
-    except psycopg.Error as exc:
+        with get_pool().connection() as connection:
+            yield connection
+    except (psycopg.OperationalError, PoolTimeout) as exc:
+        # Only connection-level failures mean "database unavailable".
         raise DatabaseUnavailable from exc
-    connection.row_factory = dict_row
-    try:
-        yield connection
-        connection.commit()
-    except psycopg.OperationalError as exc:
-        # The connection itself is broken (network, server down).
-        connection.rollback()
-        raise DatabaseUnavailable from exc
-    except Exception:
-        # SQL errors and bugs: undo the work and let them surface as 500.
-        connection.rollback()
-        raise
-    finally:
-        connection.close()
