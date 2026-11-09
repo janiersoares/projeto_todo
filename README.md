@@ -101,6 +101,11 @@ Body (JSON), same as register.
 
 After 5 failed attempts for the same email within 15 minutes, login returns `429` until the window passes. A successful login clears the counter. The counter lives in the server's memory, so it resets when the server restarts.
 
+Design trade-offs of this limit:
+
+- **Anyone who knows an email can lock that account for 15 minutes** by failing on purpose. This is the usual price of protecting against password guessing. A stronger version would limit by IP address as well.
+- **The counter is per process.** With several workers, each one counts on its own. A shared store such as Redis would fix this.
+
 ### Using the token
 
 Send the token in the `Authorization` header:

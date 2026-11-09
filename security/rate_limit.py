@@ -1,5 +1,5 @@
 import time
-from collections import defaultdict, deque
+from collections import deque
 
 
 class RateLimiter:
@@ -12,22 +12,27 @@ class RateLimiter:
     def __init__(self, max_attempts, window_seconds):
         self.max_attempts = max_attempts
         self.window_seconds = window_seconds
-        self._attempts = defaultdict(deque)
+        self._attempts = {}
 
     def _prune(self, key, now):
-        attempts = self._attempts[key]
+        attempts = self._attempts.get(key)
+        if attempts is None:
+            return
         while attempts and now - attempts[0] > self.window_seconds:
             attempts.popleft()
+        if not attempts:
+            del self._attempts[key]
 
     def is_blocked(self, key):
         now = time.monotonic()
         self._prune(key, now)
-        return len(self._attempts[key]) >= self.max_attempts
+        attempts = self._attempts.get(key)
+        return attempts is not None and len(attempts) >= self.max_attempts
 
     def record_failure(self, key):
         now = time.monotonic()
         self._prune(key, now)
-        self._attempts[key].append(now)
+        self._attempts.setdefault(key, deque()).append(now)
 
     def clear(self, key):
         self._attempts.pop(key, None)

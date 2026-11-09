@@ -1,4 +1,5 @@
 import os
+import threading
 
 import psycopg
 from psycopg.rows import dict_row
@@ -10,6 +11,7 @@ class DatabaseUnavailable(Exception):
 
 
 _pool = None
+_pool_lock = threading.Lock()
 
 
 def connect():
@@ -18,22 +20,24 @@ def connect():
 
 def get_pool():
     global _pool
-    if _pool is None:
-        _pool = ConnectionPool(
-            os.environ["DATABASE_URL"],
-            min_size=1,
-            max_size=10,
-            timeout=5,
-            kwargs={"row_factory": dict_row},
-        )
+    with _pool_lock:
+        if _pool is None:
+            _pool = ConnectionPool(
+                os.environ["DATABASE_URL"],
+                min_size=1,
+                max_size=10,
+                timeout=5,
+                kwargs={"row_factory": dict_row},
+            )
     return _pool
 
 
 def close_pool():
     global _pool
-    if _pool is not None:
-        _pool.close()
-        _pool = None
+    with _pool_lock:
+        if _pool is not None:
+            _pool.close()
+            _pool = None
 
 
 def get_connection():

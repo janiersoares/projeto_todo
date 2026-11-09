@@ -22,6 +22,25 @@ def test_limiter_clear_resets_one_key():
     assert limiter.is_blocked("a@example.com") is False
 
 
+def test_checking_unknown_keys_does_not_store_them():
+    limiter = RateLimiter(max_attempts=1, window_seconds=60)
+    for number in range(100):
+        limiter.is_blocked(f"user{number}@example.com")
+
+    assert len(limiter._attempts) == 0
+
+
+def test_expired_attempts_are_removed(monkeypatch):
+    limiter = RateLimiter(max_attempts=1, window_seconds=60)
+    now = 1000.0
+    monkeypatch.setattr("security.rate_limit.time.monotonic", lambda: now)
+    limiter.record_failure("a@example.com")
+
+    now = 1100.0  # 100 seconds later, outside the 60 second window
+    assert limiter.is_blocked("a@example.com") is False
+    assert "a@example.com" not in limiter._attempts
+
+
 def test_login_returns_429_after_too_many_failures(client):
     email = f"locked-{uuid.uuid4().hex[:8]}@example.com"
     client.post("/auth/register", json={"email": email, "password": "12345678"})
