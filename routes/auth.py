@@ -1,11 +1,9 @@
-from schemas.user import LoginBody, TokenOut, UserCreate, UserOut
-from security.token import create_access_token
-
 from fastapi import APIRouter, Depends, HTTPException
 
 from db import get_connection
 from repositories.user_repository import UserRepository
-from schemas.user import LoginBody, UserCreate, UserOut
+from schemas.user import LoginBody, TokenOut, UserCreate, UserOut
+from security.token import create_access_token
 from services.user_service import EmailAlreadyRegistered, InvalidCredentials, UserService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -22,11 +20,7 @@ def register(body: UserCreate, service: UserService = Depends(get_user_service))
     except EmailAlreadyRegistered:
         raise HTTPException(status_code=409, detail="Email already registered")
 
-    return UserOut(
-        id=user["id"],
-        email=user["email"],
-        created_at=user["created_at"].isoformat(),
-    )
+    return UserOut.from_model(user)
 
 
 @router.post("/login", status_code=200, response_model=TokenOut)
