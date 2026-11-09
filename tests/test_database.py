@@ -5,13 +5,14 @@ import db
 from main import app
 
 
-def test_database_down_returns_503(monkeypatch):
-    app.dependency_overrides.clear()
-
-    def broken_connect():
+class BrokenPool:
+    def connection(self):
         raise psycopg.OperationalError("database is down")
 
-    monkeypatch.setattr(db, "connect", broken_connect)
+
+def test_database_down_returns_503(monkeypatch):
+    app.dependency_overrides.clear()
+    monkeypatch.setattr(db, "get_pool", lambda: BrokenPool())
 
     client = TestClient(app)
     response = client.post(

@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from db import get_connection
 from repositories.user_repository import UserRepository
 from schemas.user import LoginBody, TokenOut, UserCreate, UserOut
+from security.rate_limit import login_limiter
 from security.token import create_access_token
 from services.user_service import EmailAlreadyRegistered, InvalidCredentials, UserService
 
@@ -25,9 +26,17 @@ def register(body: UserCreate, service: UserService = Depends(get_user_service))
 
 @router.post("/login", status_code=200, response_model=TokenOut)
 def login(body: LoginBody, service: UserService = Depends(get_user_service)):
+    if login_limiter.is_blocked(body.email):
+        raise HTTPException(
+            status_code=429,
+            detail="Too many login attempts. Try again later.",
+        )
+
     try:
         user = service.login(body.email, body.password)
     except InvalidCredentials:
+        login_limiter.record_failure(body.email)
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
+    login_limiter.clear(body.email)
     return TokenOut(access_token=create_access_token(user["id"]))

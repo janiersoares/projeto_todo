@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from db import get_connection
 from repositories.task_repository import TaskRepository
@@ -29,10 +29,13 @@ def create_task(
 
 @router.get("/tasks", response_model=list[TaskOut])
 def list_tasks(
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     service: TaskService = Depends(get_service),
     user_id: int = Depends(get_current_user_id),
 ):
-    return [TaskOut.from_model(task) for task in service.list_all(user_id)]
+    tasks = service.list_all(user_id, limit, offset)
+    return [TaskOut.from_model(task) for task in tasks]
 
 
 @router.get("/tasks/{task_id}", response_model=TaskOut)

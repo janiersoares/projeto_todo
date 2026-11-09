@@ -11,6 +11,13 @@ from psycopg.rows import dict_row
 
 from db import get_connection
 from main import app
+from security.rate_limit import login_limiter
+
+
+@pytest.fixture(autouse=True)
+def reset_login_limiter():
+    login_limiter.reset()
+    yield
 
 
 @pytest.fixture
