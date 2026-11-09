@@ -9,7 +9,7 @@ def test_list_requires_token(client):
 def test_create_then_list_with_token(client, auth_headers):
     created = client.post(
         "/tasks",
-        json={"title": "Minha tarefa"},
+        json={"title": "My task"},
         headers=auth_headers,
     )
     assert created.status_code == 201
@@ -17,13 +17,13 @@ def test_create_then_list_with_token(client, auth_headers):
     listed = client.get("/tasks", headers=auth_headers)
     assert listed.status_code == 200
     titles = [task["title"] for task in listed.json()]
-    assert "Minha tarefa" in titles
+    assert "My task" in titles
 
 
 def test_user_cannot_read_another_users_task(client, auth_headers):
     created = client.post(
         "/tasks",
-        json={"title": "Privada"},
+        json={"title": "Private task"},
         headers=auth_headers,
     )
     task_id = created.json()["id"]
@@ -46,7 +46,7 @@ def test_user_cannot_read_another_users_task(client, auth_headers):
 def test_user_cannot_delete_another_users_task(client, auth_headers):
     created = client.post(
         "/tasks",
-        json={"title": "Não apagar"},
+        json={"title": "Do not delete"},
         headers=auth_headers,
     )
     task_id = created.json()["id"]
