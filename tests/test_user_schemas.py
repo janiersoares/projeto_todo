@@ -32,4 +32,21 @@ def test_password_with_exactly_8_characters_is_accepted():
 def test_email_is_normalized_to_lowercase():
     user = UserCreate(email="  User@Example.COM  ", password="12345678")
     assert user.email == "user@example.com"
-    
+
+
+def test_user_out_from_model_maps_fields():
+    from datetime import datetime, timezone
+
+    from schemas.user import UserOut
+
+    row = {
+        "id": 7,
+        "email": "ana@example.com",
+        "created_at": datetime(2026, 1, 1, tzinfo=timezone.utc),
+    }
+
+    out = UserOut.from_model(row)
+
+    assert out.id == 7
+    assert out.email == "ana@example.com"
+    assert out.created_at == "2026-01-01T00:00:00+00:00"
