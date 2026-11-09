@@ -21,10 +21,12 @@ def get_connection():
     try:
         yield connection
         connection.commit()
-    except psycopg.Error as exc:
+    except psycopg.OperationalError as exc:
+        # The connection itself is broken (network, server down).
         connection.rollback()
         raise DatabaseUnavailable from exc
     except Exception:
+        # SQL errors and bugs: undo the work and let them surface as 500.
         connection.rollback()
         raise
     finally:
